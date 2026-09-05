@@ -1,0 +1,68 @@
+# =============================================================================
+# ir-soar base configuration
+#
+# This file defines SAFE DEFAULTS for every setting. It is always loaded
+# first. An environment overlay (config.<env>.yaml) is deep-merged on top,
+# then environment variables, then CLI arguments — in that order of
+# increasing precedence. See docs/architecture.md for the full merge model.
+#
+# Nothing here is a secret. Anywhere a credential is needed, this file names
+# the ENVIRONMENT VARIABLE that holds it (api_key_env), never the value.
+#
+# ${VAR:-default} syntax is supported for any string value and is resolved
+# against the process environment at load time — this is how paths avoid
+# ever being hardcoded to a specific machine.
+# =============================================================================
+
+environment: lab            # lab | home | production-like
+mode: dry-run                # dry-run | interactive | live
+
+logging:
+  level: INFO                 # DEBUG | INFO | WARNING | ERROR
+  format: json                 # json | text
+  log_dir: "${IR_SOAR_LOG_DIR:-./logs}"
+  audit_log_path: "${IR_SOAR_AUDIT_LOG:-./logs/audit.jsonl}"
+
+execution:
+  default_timeout_seconds: 30
+  max_retries: 2
+  retry_backoff_seconds: 5
+  max_actions_per_run: 100    # hard ceiling — guards against runaway/misconfigured playbooks
+
+approval:
+  require_for_containment: true
+  require_for_enrichment: false
+  auto_approve_risk_below: low   # low | medium | high — steps below this risk never need a human
+
+connectors:
+  isolation:
+    type: simulated               # simulated | edr_api (future real integration)
+    endpoint: "${EDR_API_ENDPOINT:-}"
+    api_key_env: EDR_API_KEY
+  identity:
+    type: simulated                # simulated | okta_api (future)
+    endpoint: "${IDENTITY_API_ENDPOINT:-}"
+    api_key_env: IDENTITY_API_KEY
+  firewall:
+    type: simulated                # simulated | firewall_api (future)
+    endpoint: "${FIREWALL_API_ENDPOINT:-}"
+    api_key_env: FIREWALL_API_KEY
+
+enrichment_providers:
+  ip_reputation:
+    type: simulated                 # simulated | abuseipdb | virustotal (future)
+    api_key_env: ABUSEIPDB_API_KEY
+  hash_reputation:
+    type: simulated                  # simulated | virustotal (future)
+    api_key_env: VT_API_KEY
+  whois_dns:
+    type: simulated                  # simulated | whois_api (future)
+    api_key_env: WHOIS_API_KEY
+
+paths:
+  playbooks_dir: "${IR_SOAR_PLAYBOOKS_DIR:-./config/playbooks}"
+  evidence_dir: "${IR_SOAR_EVIDENCE_DIR:-./evidence}"
+
+safety:
+  full_auto_requires_ack_env: true   # in full-auto + non-interactive, IR_SOAR_FULL_AUTO_ACK must be "true"
+  dangerous_action_risk_floor: medium  # actions at/above this risk are always logged with a WARNING banner

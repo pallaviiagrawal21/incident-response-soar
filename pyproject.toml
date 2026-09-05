@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ir-soar"
+version = "0.1.0"
+description = "Lightweight Incident Response Playbook + SOAR-style automation framework"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Your Name" }]
+keywords = ["incident-response", "soar", "security-automation", "playbook", "mitre-attack"]
+
+dependencies = [
+    "pydantic>=2.6,<3.0",
+    "PyYAML>=6.0,<7.0",
+    "typer>=0.12,<1.0",
+    "rich>=13.7,<14.0",
+    "Jinja2>=3.1,<4.0",
+    "python-dotenv>=1.0,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+    "pytest-cov>=5.0,<6.0",
+    "mypy>=1.9,<2.0",
+    "ruff>=0.4,<1.0",
+    "types-PyYAML>=6.0,<7.0",
+]
+
+[project.scripts]
+ir-soar = "ir_soar.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

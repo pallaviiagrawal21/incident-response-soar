@@ -1,0 +1,35 @@
+# =============================================================================
+# Overlay: production-like environment
+#
+# Represents a hardened posture suitable for a realistic (but still
+# practice/portfolio) production-like environment: real connector types can
+# be enabled here, approval gates are strict, and full-auto is effectively
+# unusable without deliberate, explicit acknowledgement.
+#
+# NOTE: connector "type" values below (edr_api / okta_api / firewall_api)
+# are the extension points described in docs/extending.md. They are NOT
+# implemented in this project yet — set them only once you have built and
+# tested the corresponding connector class.
+# =============================================================================
+
+environment: production-like
+mode: interactive
+
+execution:
+  default_timeout_seconds: 45
+  max_retries: 1              # be conservative about retrying state-changing calls
+  retry_backoff_seconds: 10
+  max_actions_per_run: 25     # smallest ceiling of all environments
+
+approval:
+  require_for_containment: true
+  require_for_enrichment: true   # even read-only enrichment needs sign-off here
+  auto_approve_risk_below: low
+
+safety:
+  full_auto_requires_ack_env: true
+  dangerous_action_risk_floor: low   # everything medium+ gets a loud warning
+
+logging:
+  level: INFO
+  format: json
