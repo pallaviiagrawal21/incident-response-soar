@@ -1,0 +1,22 @@
+# =============================================================================
+# Overlay: home environment
+#
+# For a home-lab setup where you may run against a few real local systems
+# (e.g. a spare VM you own) but still want strong guardrails since this is
+# no longer a fully isolated sandbox.
+# =============================================================================
+
+environment: home
+mode: interactive          # never auto-execute at home without being prompted
+
+execution:
+  default_timeout_seconds: 20
+  max_actions_per_run: 50   # tighter ceiling than lab
+
+approval:
+  require_for_containment: true
+  require_for_enrichment: false
+  auto_approve_risk_below: low
+
+logging:
+  level: INFO

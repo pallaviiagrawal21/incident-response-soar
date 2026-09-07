@@ -1,0 +1,13 @@
+# =============================================================================
+# Overlay: lab environment
+#
+# Overlays only specify DELTAS from config.yaml — anything not listed here
+# is inherited unchanged from the base file. The base config.yaml is already
+# tuned to be lab-safe, so this overlay is intentionally small.
+# =============================================================================
+
+environment: lab
+mode: dry-run
+
+logging:
+  level: DEBUG   # verbose logging is fine in a lab — nothing here touches real infra

@@ -1,0 +1,149 @@
+# =============================================================================
+# Machine-readable playbook: Phishing -> Credential Harvesting -> Lateral Movement
+#
+# Consumed by ir_soar.engine.playbook_loader / executor. The paired
+# human-readable version lives at playbooks/phishing_lateral_movement.md —
+# step ids in that document's "Automation Cross-Reference" table match the
+# `id` fields below.
+#
+# `{{ incident.* }}` placeholders are resolved by the executor at run time
+# from the incident context file passed via `--incident-file` (or CLI
+# overrides) — never hardcoded here. See docs/architecture.md.
+# =============================================================================
+
+id: phishing_lateral_movement
+name: "Phishing -> Credential Harvesting -> Lateral Movement"
+version: "1.0"
+description: >
+  Response playbook for a phishing email that leads to credential
+  harvesting via a spoofed login page, followed by the attacker using the
+  harvested credentials for lateral movement inside the environment.
+
+mitre_attack:
+  - tactic: "Initial Access"
+    technique: "T1566.002"
+    technique_name: "Phishing: Spearphishing Link"
+  - tactic: "Credential Access"
+    technique: "T1078"
+    technique_name: "Valid Accounts"
+  - tactic: "Discovery"
+    technique: "T1087"
+    technique_name: "Account Discovery"
+  - tactic: "Lateral Movement"
+    technique: "T1021"
+    technique_name: "Remote Services"
+  - tactic: "Command and Control"
+    technique: "T1071.001"
+    technique_name: "Application Layer Protocol: Web Protocols"
+
+phases:
+  - name: preparation
+    steps: []   # readiness activities (see playbooks/phishing_lateral_movement.md, Section 3) — not automated
+
+  - name: identification
+    steps:
+      - id: enrich_sender_domain
+        action_type: ip_domain_reputation
+        description: "Look up reputation for the domain that sent the phishing email."
+        inputs:
+          target: "{{ incident.sender_domain }}"
+        requires_approval: false
+        risk: low
+        on_success: continue
+        on_failure: continue_with_warning
+
+      - id: enrich_malicious_link_domain
+        action_type: ip_domain_reputation
+        description: "Look up reputation for the credential-harvesting landing page domain, if known."
+        inputs:
+          target: "{{ incident.malicious_link_domain }}"
+        requires_approval: false
+        risk: low
+        on_failure: continue_with_warning
+
+      - id: whois_sender_domain
+        action_type: whois_dns
+        description: "Pull WHOIS/DNS registration details for the sender domain (age, registrar, recent changes)."
+        inputs:
+          target: "{{ incident.sender_domain }}"
+        requires_approval: false
+        risk: low
+        on_failure: continue_with_warning
+
+      - id: correlate_auth_logs
+        action_type: log_correlation
+        description: "Correlate authentication logs for the affected user around the time of the phishing click."
+        inputs:
+          user: "{{ incident.affected_user }}"
+          window_minutes: 60
+        requires_approval: false
+        risk: low
+        on_failure: continue_with_warning
+
+      - id: correlate_lateral_movement_logs
+        action_type: log_correlation
+        description: "Correlate authentication/remote-access logs across other hosts for the same user/credential."
+        inputs:
+          user: "{{ incident.affected_user }}"
+          window_minutes: 240
+        condition: "steps.correlate_auth_logs.result.suspicious == true"
+        requires_approval: false
+        risk: low
+        on_failure: continue_with_warning
+
+  - name: containment
+    steps:
+      - id: disable_compromised_account
+        action_type: disable_account
+        description: "Disable the affected user's account to stop further use of harvested credentials."
+        inputs:
+          username: "{{ incident.affected_user }}"
+        condition: "steps.correlate_auth_logs.result.suspicious == true"
+        requires_approval: true
+        risk: high
+        on_failure: abort_run
+
+      - id: isolate_affected_host
+        action_type: isolate_host
+        description: "Network-isolate the host where the phishing link was originally clicked."
+        inputs:
+          hostname: "{{ incident.affected_host }}"
+        requires_approval: true
+        risk: high
+        on_failure: continue_with_warning
+
+      - id: isolate_lateral_movement_hosts
+        action_type: isolate_host
+        description: "Network-isolate any additional hosts identified during lateral-movement correlation."
+        inputs:
+          hostname: "{{ incident.lateral_movement_host }}"
+        condition: "steps.correlate_lateral_movement_logs.result.suspicious == true"
+        requires_approval: true
+        risk: high
+        on_failure: continue_with_warning
+
+      - id: block_malicious_domain
+        action_type: block_ip_domain
+        description: "Block the phishing sender domain and/or the credential-harvesting landing page domain at the perimeter."
+        inputs:
+          target: "{{ incident.malicious_link_domain }}"
+        requires_approval: true
+        risk: medium
+        on_failure: continue_with_warning
+
+  - name: eradication
+    steps:
+      - id: collect_forensics_affected_host
+        action_type: collect_forensics
+        description: "Collect basic forensic artifacts from the affected host before rebuild/remediation."
+        inputs:
+          hostname: "{{ incident.affected_host }}"
+        requires_approval: true
+        risk: medium
+        on_failure: continue_with_warning
+
+  - name: recovery
+    steps: []   # re-enable account after reset + MFA re-enrollment, host rebuild validation — human-driven, see MD
+
+  - name: lessons_learned
+    steps: []   # post-incident review — human-driven, see MD

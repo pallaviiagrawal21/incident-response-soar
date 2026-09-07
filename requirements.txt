@@ -1,0 +1,10 @@
+# Runtime dependencies (mirrors [project.dependencies] in pyproject.toml)
+pydantic>=2.6,<3.0
+PyYAML>=6.0,<7.0
+typer>=0.12,<1.0
+rich>=13.7,<14.0
+Jinja2>=3.1,<4.0
+python-dotenv>=1.0,<2.0
+
+# --- Development / testing (optional: pip install -r requirements.txt -r requirements-dev.txt) ---
+# See pyproject.toml [project.optional-dependencies].dev for the authoritative dev list.
