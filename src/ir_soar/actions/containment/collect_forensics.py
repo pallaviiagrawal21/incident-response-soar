@@ -23,6 +23,7 @@ from ir_soar.utils.validation import ValidationError, ensure_no_shell_metacharac
 class CollectForensicsAction(BaseAction):
     description = "Collect basic forensic artifacts from a host (process list, network connections, file metadata)."
     default_risk = "medium"
+    category = "containment"
 
     def validate_inputs(self, inputs: dict[str, Any]) -> dict[str, Any]:
         hostname = inputs.get("hostname")

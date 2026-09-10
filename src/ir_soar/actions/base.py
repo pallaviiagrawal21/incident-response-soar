@@ -125,6 +125,11 @@ class BaseAction(ABC):
     #: always comes from the playbook Step, never from this class attribute
     default_risk: ClassVar[str] = "low"
 
+    #: "enrichment" (read-only, no side effects) or "containment"
+    #: (state-changing). Used by the decision engine to apply
+    #: config.approval.require_for_containment / require_for_enrichment.
+    category: ClassVar[str] = "enrichment"
+
     def __init__(self, logger: logging.Logger | None = None) -> None:
         self._logger = logger or logging.getLogger(
             f"ir_soar.actions.{self.action_name or self.__class__.__name__}"

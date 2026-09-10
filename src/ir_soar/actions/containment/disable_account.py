@@ -20,6 +20,7 @@ from ir_soar.utils.validation import ValidationError, ensure_no_shell_metacharac
 class DisableAccountAction(BaseAction):
     description = "Disable a user account to stop further use of compromised credentials."
     default_risk = "high"
+    category = "containment"
 
     def validate_inputs(self, inputs: dict[str, Any]) -> dict[str, Any]:
         username = inputs.get("username")

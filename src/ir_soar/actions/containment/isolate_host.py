@@ -21,6 +21,7 @@ from ir_soar.utils.validation import ValidationError, ensure_no_shell_metacharac
 class IsolateHostAction(BaseAction):
     description = "Network-isolate a host to stop further attacker activity or lateral movement."
     default_risk = "high"
+    category = "containment"
 
     def validate_inputs(self, inputs: dict[str, Any]) -> dict[str, Any]:
         hostname = inputs.get("hostname")

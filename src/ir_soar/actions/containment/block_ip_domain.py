@@ -20,6 +20,7 @@ from ir_soar.utils.validation import ValidationError, ensure_no_shell_metacharac
 class BlockIpDomainAction(BaseAction):
     description = "Block an IP address or domain at the network perimeter."
     default_risk = "medium"
+    category = "containment"
 
     def validate_inputs(self, inputs: dict[str, Any]) -> dict[str, Any]:
         target = inputs.get("target")

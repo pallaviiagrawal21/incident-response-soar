@@ -7,6 +7,7 @@ this is the contract between human-authored playbook files and the engine.
 from __future__ import annotations
 
 from ir_soar.models.action_result import ActionResult, ActionStatus
+from ir_soar.models.audit_event import AuditEvent, AuditEventType
 from ir_soar.models.playbook import (
     MitreMapping,
     OnFailure,
@@ -19,6 +20,8 @@ from ir_soar.models.playbook import (
 __all__ = [
     "ActionResult",
     "ActionStatus",
+    "AuditEvent",
+    "AuditEventType",
     "MitreMapping",
     "OnFailure",
     "OnSuccess",
