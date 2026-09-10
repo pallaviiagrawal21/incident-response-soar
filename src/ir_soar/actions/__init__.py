@@ -14,7 +14,7 @@ from ir_soar.actions.base import ACTION_REGISTRY, ActionTimeoutError, BaseAction
 
 # Importing these subpackages is what actually populates ACTION_REGISTRY —
 # each module inside calls @register_action at class-definition time.
-# containment/ is added here once it exists (build step 6).
+from ir_soar.actions import containment as _containment  # noqa: F401
 from ir_soar.actions import enrichment as _enrichment  # noqa: F401
 
 __all__ = [
