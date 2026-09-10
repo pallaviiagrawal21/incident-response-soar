@@ -1,0 +1,55 @@
+version: "3.9"
+
+# Usage (from the repo root):
+#   cp .env.example .env          # fill in real values if you have any real connectors configured
+#   docker compose -f docker/docker-compose.yml build
+#   docker compose -f docker/docker-compose.yml run --rm ir-soar list-playbooks
+#   docker compose -f docker/docker-compose.yml run --rm ir-soar run --playbook phishing_lateral_movement --dry-run
+#
+# `run --rm` is used deliberately rather than `up`: ir-soar is a one-shot
+# CLI tool invoked per-incident, not a long-running service.
+
+services:
+  ir-soar:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: ir-soar:latest
+    container_name: ir-soar
+
+    # Loads any real connector credentials from a real .env (gitignored,
+    # copied from .env.example). `required: false` means this works even
+    # before you've created one — every setting has a safe default and the
+    # pre-built config overlays never require real credentials in
+    # lab/home mode.
+    env_file:
+      - path: ../.env
+        required: false
+    environment:
+      IR_SOAR_ENV: ${IR_SOAR_ENV:-lab}
+      IR_SOAR_MODE: ${IR_SOAR_MODE:-dry-run}
+      IR_SOAR_LOG_DIR: /app/logs
+      IR_SOAR_AUDIT_LOG: /app/logs/audit.jsonl
+      IR_SOAR_PLAYBOOKS_DIR: /app/config/playbooks
+      IR_SOAR_EVIDENCE_DIR: /app/evidence
+
+    volumes:
+      # Config and playbooks are mounted read-only so you can edit a
+      # playbook or config overlay on the host and re-run immediately,
+      # without rebuilding the image — but the container itself can never
+      # write back into them.
+      - ../config:/app/config:ro
+      - ../playbooks:/app/playbooks:ro
+      # Logs and evidence are named volumes so they persist across
+      # container runs (each `run --rm` is a fresh container) without
+      # cluttering the host filesystem with root-owned files.
+      - ir-soar-logs:/app/logs
+      - ir-soar-evidence:/app/evidence
+
+    # Default command if invoked via `docker compose up` / `run` with no
+    # extra arguments — shows something useful rather than erroring.
+    command: ["list-playbooks"]
+
+volumes:
+  ir-soar-logs:
+  ir-soar-evidence:
