@@ -183,6 +183,17 @@ def load_config(
     merged = _apply_named_env_overrides(merged)
     merged = _apply_cli_overrides(merged, cli_overrides or {})
 
+    # The explicit `env` argument (typically sourced from --env) is itself
+    # a CLI-level choice, not merely an internal detail of which overlay
+    # file to read. It must win over IR_SOAR_ENV even though the overlay
+    # merge and the named-env-var override both touch the same
+    # `environment` field — otherwise an operator's explicit `--env home`
+    # could be silently overridden by a stray IR_SOAR_ENV set elsewhere
+    # (e.g. in a .env file), contradicting the documented
+    # CLI > env vars precedence. Applied last, deliberately.
+    if env is not None:
+        merged["environment"] = env
+
     try:
         return AppConfig.model_validate(merged)
     except ValidationError as exc:
